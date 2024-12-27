@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# System of ODEs
+def f1(u, v):
+    return v  # First function: du/dx = v
+
+def f2(u, v):
+    return u**3 - u * v  # Second function: dv/dx = u^3 - u*v
+
+# RK4 Solver for Systems
+def RK4(x, u, v, h):
+    k1_u = h * f1(u, v)
+    k1_v = h * f2(u, v)
+
+    k2_u = h * f1(u + 0.5 * k1_u, v + 0.5 * k1_v)
+    k2_v = h * f2(u + 0.5 * k1_u, v + 0.5 * k1_v)
+
+    k3_u = h * f1(u + 0.5 * k2_u, v + 0.5 * k2_v)
+    k3_v = h * f2(u + 0.5 * k2_u, v + 0.5 * k2_v)
+
+    k4_u = h * f1(u + k3_u, v + k3_v)
+    k4_v = h * f2(u + k3_u, v + k3_v)
+
+    u_next = u + (k1_u + 2 * k2_u + 2 * k3_u + k4_u) / 6
+    v_next = v + (k1_v + 2 * k2_v + 2 * k3_v + k4_v) / 6
+
+    return u_next, v_next
+
+# Boundary conditions and initial setup
+a = 1
+b = 2
+n = 5  # Number of intervals
+h = (b - a) / n
+
+u1 = 0.5  # Boundary value at x = a
+u2 = 1 / 3  # Boundary value at x = b
+x_vals = np.linspace(a, b, n + 1)
+
+# Initial guesses for the shooting method
+s0 = (u2 - u1) / (b - a)  # Initial slope guess
+s1 = s0 + 0.1  # Slightly perturbed slope for the secant method
+
+# Shooting method loop
+tolerance = 1e-6
+max_iter = 100
+
+for iteration in range(max_iter):
+    # First guess using s0
+    u = u1
+    v = s0
+    u_vals_1 = [u]
+
+    for x in x_vals[:-1]:
+        u, v = RK4(x, u, v, h)
+        u_vals_1.append(u)
+    f0 = u_vals_1[-1] - u2
+
+    # Second guess using s1
+    u = u1
+    v = s1
+    u_vals_2 = [u]
+
+    for x in x_vals[:-1]:
+        u, v = RK4(x, u, v, h)
+        u_vals_2.append(u)
+    f1_val = u_vals_2[-1] - u2
+
+    # Update the slope using secant method
+    s_new = s1 - f1_val * (s1 - s0) / (f1_val - f0)
+
+    # Check for convergence
+    if abs(s_new - s1) < tolerance:
+        print(f"Converged in {iteration + 1} iterations")
+        break
+
+    s0 = s1
+    s1 = s_new
+
+# Final solution
+u_final = u_vals_2
+
+# Exact solution for comparison (if known)
+def exact_solution(x):
+    return 1 / (x + 1)
+
+# Plot the results
+plt.plot(x_vals, u_final, 'o-', label="Numerical Solution")
+plt.plot(x_vals, exact_solution(x_vals), '--', label="Exact Solution")
+plt.xlabel("x")
+plt.ylabel("u(x)")
+plt.title("Nonlinear Shooting Method Solution")
+plt.legend()
+plt.show()
