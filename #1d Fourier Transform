@@ -1,0 +1,59 @@
+from scipy.fftpack import fft
+import matplotlib.pyplot as plt
+import numpy as np
+
+#number of sample of points
+N=800
+
+#sample spacing
+T=1.0/N
+
+t=np.linspace(0.0,N*T, N)
+y=np.sin(50*2*np.pi*t)+0.5*np.sin(80*2*np.pi*t)
+
+#perform dft by calling the scipy library
+yf=fft(y)
+xf=np.linspace(0,1/(2*T),N//2)
+
+#perform dft using numpy library
+ynp=np.fft.fft(y)
+
+titles = ['x','scipy','numpy']
+data=[titles]+list(zip(xf,yf,ynp))
+
+#print result
+print ('Result from sciy and numpy')
+for i, d in enumerate(data):
+    line='|'.join (str(x).ljust(12) for x in d)
+    print(line)
+
+#Plot the result
+plt.title('$f(x)=\sin (50(2\pi t)+0.5 \sin(80(2\pi t)))$')
+plt.figure(1)
+plt.xlabel('Time(s)')
+plt.ylabel('Amplitude')
+plt.plot(t,y,label='original function')
+plt.legend()
+plt.grid()
+
+#apply fft to the function
+plt.figure (2)
+plt.title('FFT')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel ('Amplitude')
+plt.plot(t,yf,color='k',label='scipy fft')
+plt.plot(t,ynp,color='r',linestyle=':',label = ' numpy fft')
+plt.legend()
+plt.grid()
+
+#retain the real dft to the function
+plt.figure(3)
+plt.title('Inverse FFT')
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.plot(xf,2/N*np.abs(yf[0:N//2]),color='k',label='scipy fft')
+plt.plot(xf, 2/N*np.abs(ynp[0:N//2]),color='r',linestyle=':',label='numpy fft')
+plt.legend()
+plt.grid()
+
+plt.show()
